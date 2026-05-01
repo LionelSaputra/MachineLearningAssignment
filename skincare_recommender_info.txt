@@ -1,0 +1,71 @@
+Informasi Sistem Rekomendasi Skincare (Skincare Recommender)
+============================================================
+
+1. MODEL APA SAJA YANG DIGUNAKAN?
+Sistem ini menggunakan dua pendekatan Machine Learning:
+a. Model Klasifikasi (Supervised Learning) untuk mendiagnosis kondisi medis/penyakit kulit berdasarkan gejala klinis. Terdapat 4 model yang dilatih dan dievaluasi, dengan Random Forest sebagai model terbaik yang dipilih untuk sistem akhir:
+   - Random Forest (Model Terbaik / Dipakai Sistem)
+   - Support Vector Machine (SVM) dengan RBF Kernel
+   - Logistic Regression
+   - Decision Tree
+
+b. Model Clustering (Unsupervised Learning) untuk menentukan tipe atau profil kulit.
+   - K-Means Clustering (menggunakan 5 cluster yang merepresentasikan profil kulit: Sensitif, Normal, Berminyak, Kering, dan Kombinasi).
+
+2. PERFORMA MODEL (AKURASI, F1 SCORE, DLL)
+Berdasarkan hasil pengujian pada dataset, berikut adalah metrik performa dari setiap model klasifikasi yang dilatih:
+
+   * Random Forest (Terbaik)
+     Akurasi   : 95.95%
+     F1 Score  : 95.95%
+     Precision : 96.07%
+     Recall    : 95.95%
+
+   * Logistic Regression
+     Akurasi   : 94.59%
+     F1 Score  : 94.59%
+     Precision : 95.00%
+     Recall    : 94.59%
+
+   * SVM (RBF)
+     Akurasi   : 93.24%
+     F1 Score  : 93.26%
+     Precision : 93.37%
+     Recall    : 93.24%
+
+   * Decision Tree
+     Akurasi   : 91.89%
+     F1 Score  : 91.74%
+     Precision : 92.51%
+     Recall    : 91.89%
+
+3. BAGAIMANA CARA KERJANYA?
+Sistem bekerja melalui beberapa tahapan terintegrasi:
+
+   Langkah 1: Input Gejala (Input Symptoms)
+   Pengguna (user) memasukkan gejala-gejala klinis yang sedang dialami melalui aplikasi berbasis web (contohnya Streamlit). Gejala yang dimasukkan kemudian distandardisasi.
+
+   Langkah 2: Prediksi Kondisi Kulit (Classification)
+   Data gejala diproses dan diumpankan ke model klasifikasi terbaik (Random Forest). Model memprediksi secara otomatis jenis penyakit atau kondisi kulit yang dialami (contoh: Psoriasis, Seboreic Dermatitis, Lichen Planus, Pityriasis Rosea, dll).
+
+   Langkah 3: Penentuan Profil Kulit (Clustering)
+   Pada waktu yang sama, data input pengguna diproses oleh model K-Means Clustering untuk mengidentifikasi tipe atau profil kulit asli pengguna. Kulit akan dikelompokkan ke salah satu dari 5 tipe: Sensitif, Normal, Berminyak, Kering, atau Kombinasi.
+
+   Langkah 4: Mesin Rekomendasi (Rule-Based Engine)
+   Setelah mendapatkan 'Kondisi Medis Kulit' dan 'Tipe Kulit', mesin rekomendasi sistem akan mencocokkan hasil tersebut dengan Database Produk Skincare (PRODUCT_DB) yang sudah divalidasi. Sistem kemudian menampilkan:
+   - Rutinitas Perawatan Lengkap (Cleanser, Toner, Moisturizer, Sunscreen, Serum).
+   - Bahan-Bahan yang Harus Dihindari (Avoidance List) agar kondisi kulit tidak memburuk (misal: anjuran menghindari alkohol atau fragrance untuk kulit eksim kronis).
+   - Tips Perawatan Kulit Harian (Daily Tips) yang bersifat non-medis untuk memperbaiki gaya hidup.
+
+Sistem ini didesain tidak hanya untuk menyarankan kosmetik, namun lebih memprioritaskan rekomendasi produk yang aman dan sesuai secara dermatologis untuk profil medis pengguna, terutama dikhususkan bagi demografi usia muda (young adults).
+
+4. DATASET YANG DIGUNAKAN
+Sistem ini dibangun dan dilatih menggunakan dataset medis publik, yaitu:
+- Nama Dataset : UCI Dermatology Dataset
+- Sumber       : UCI Machine Learning Repository (https://archive.ics.uci.edu/dataset/33/dermatology)
+- Jumlah Data  : 366 instansi (pasien)
+- Fitur        : 34 fitur (gejala klinis dan histopatologis)
+- Kelas Target : 6 kondisi kulit (Psoriasis, Seboreic Dermatitis, Lichen Planus, Pityriasis Rosea, Chronic Dermatitis, Pityriasis Rubra Pilaris)
+
+5. REFERENSI (CITATION)
+Ilter, N. & Guvenir, H. (1998). Dermatology [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5FK5P
