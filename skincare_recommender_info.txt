@@ -60,12 +60,14 @@ Sistem bekerja melalui beberapa tahapan terintegrasi:
    Pada waktu yang sama, data input pengguna diproses oleh model K-Means Clustering untuk mengidentifikasi tipe atau profil kulit asli pengguna. Kulit akan dikelompokkan ke salah satu dari 5 tipe: Sensitif, Normal, Berminyak, Kering, atau Kombinasi.
 
    Langkah 4: Mesin Rekomendasi (Rule-Based Engine) - [Bagaimana Tahu Skincare yang Cocok & Larangannya?]
-   Setelah mendapatkan prediksi penyakit ('Kondisi Medis Kulit') dan 'Tipe Kulit', sistem menggunakan pendekatan Berbasis Aturan (*Rule-Based Engine*). Di dalam program (file `recommend.py`), terdapat sebuah database kamus (*PRODUCT_DB*) yang sudah dipetakan secara statis berdasarkan riset literatur dermatologi.
+   Penting untuk dicatat bahwa Dataset UCI murni hanya berisi data angka rekam medis untuk diagnosis. Dataset ini *tidak mengandung* referensi produk skincare, tips, maupun larangan.
    
-   Sistem bekerja dengan mencocokkan aturan tersebut secara otomatis:
-   - Menentukan Larangan (Avoidance List): Jika terprediksi "Psoriasis", sistem akan mengecek database larangan dan mengeluarkan daftar seperti "Hindari alkohol denat, parfum sintetis, dan SLS" karena dapat memicu iritasi (flare-up) pada Psoriasis.
-   - Pemilihan Produk Skincare: Sistem akan menarik produk spesifik untuk kategori cleanser, toner, moisturizer, dll., yang sudah khusus disiapkan untuk penyakit tersebut. Produk-produk ini telah divalidasi memiliki *Key Ingredients* (bahan utama) yang aman dan menyembuhkan (seperti Ceramide atau Salicylic Acid yang aman).
-   - Tips Perawatan Kulit Harian: Ditambahkan secara otomatis untuk melengkapi gaya hidup (non-medis).
+   Untuk menghasilkan rekomendasi, sistem menggunakan pendekatan Hibrida (Machine Learning + Expert System). Setelah model AI mendiagnosis kondisi medis pengguna, aplikasi akan beralih menggunakan Sistem Pakar Berbasis Aturan (*Rule-Based Engine*) yang telah diprogram secara manual oleh pengembang. Di dalam kode aplikasi (tepatnya di file `src/recommend.py`), terdapat kamus/database internal statis (*PRODUCT_DB*, *CONDITION_AVOID*) yang dibangun berdasarkan panduan dermatologi umum.
+   
+   Sistem kemudian mencocokkan aturan logika (If-Else) tersebut secara otomatis:
+   - Menentukan Larangan (Avoidance List): Jika AI memprediksi "Psoriasis", sistem akan melihat kamus internal dan mengeluarkan daftar larangan spesifik, misal: "Hindari alkohol denat dan SLS".
+   - Pemilihan Produk Skincare: Sistem akan menarik rekomendasi produk komersil (cleanser, toner, moisturizer) dari kamus *hardcode* yang telah dipilihkan karena mengandung *Key Ingredients* aman (seperti Ceramide).
+   - Tips Perawatan Kulit Harian: Ditambahkan dari teks statis internal untuk membantu pemulihan melalui gaya hidup.
 
 Sistem ini didesain tidak hanya untuk menyarankan kosmetik, namun lebih memprioritaskan rekomendasi produk yang aman dan sesuai secara dermatologis untuk profil medis pengguna, terutama dikhususkan bagi demografi usia muda (young adults).
 
