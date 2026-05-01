@@ -39,23 +39,33 @@ Berdasarkan hasil pengujian pada dataset, berikut adalah metrik performa dari se
      Precision : 92.51%
      Recall    : 91.89%
 
+   [Penjelasan Metrik Evaluasi]
+   - Akurasi (Accuracy)  : Persentase seberapa banyak model menebak dengan benar secara keseluruhan (benar diprediksi dari total seluruh data uji).
+   - Precision           : Dari semua yang ditebak "Penyakit A" oleh model, seberapa banyak yang *benar-benar* mengidap "Penyakit A". Ini penting agar model tidak salah mendiagnosis orang sehat (atau sakit lain) menjadi sakit A (menghindari False Positive).
+   - Recall              : Dari semua pasien yang *nyata-nyatanya* mengidap "Penyakit A", seberapa banyak yang berhasil ditebak benar oleh model. Ini penting agar penyakit tidak terlewat dideteksi (menghindari False Negative).
+   - F1 Score            : Nilai rata-rata harmonis antara Precision dan Recall. Jika F1 Score tinggi, berarti model sangat seimbang dan stabil dalam memprediksi berbagai penyakit kulit tersebut.
+   - CV 5-Fold (Cross-Validation) : Metode pengujian ketat di mana dataset dibagi menjadi 5 bagian. Model dilatih dan diuji 5 kali secara bergantian menggunakan potongan data yang berbeda-beda. Tujuannya adalah untuk membuktikan bahwa akurasi model konsisten/stabil, bukan kebetulan bagus di satu pembagian data saja.
+   - ROC-AUC (Area Under Curve)   : Metrik probabilitas yang mengukur seberapa baik model dapat membedakan (memisahkan) antara satu penyakit dengan penyakit lainnya. Semakin mendekati angka 1.0, berarti model sangat ahli dan yakin dalam membedakan setiap kelas penyakit tanpa kebingungan.
+
 3. BAGAIMANA CARA KERJANYA?
 Sistem bekerja melalui beberapa tahapan terintegrasi:
 
    Langkah 1: Input Gejala (Input Symptoms)
    Pengguna (user) memasukkan gejala-gejala klinis yang sedang dialami melalui aplikasi berbasis web (contohnya Streamlit). Gejala yang dimasukkan kemudian distandardisasi.
 
-   Langkah 2: Prediksi Kondisi Kulit (Classification)
-   Data gejala diproses dan diumpankan ke model klasifikasi terbaik (Random Forest). Model memprediksi secara otomatis jenis penyakit atau kondisi kulit yang dialami (contoh: Psoriasis, Seboreic Dermatitis, Lichen Planus, Pityriasis Rosea, dll).
+   Langkah 2: Prediksi Kondisi Kulit (Classification) - [Bagaimana Cara Mendapatkan Prediksi?]
+   Data gejala diproses dengan metode *scaling* (menyamakan skala angka) dan diumpankan ke model klasifikasi terbaik (Random Forest). Model Random Forest adalah kumpulan dari banyak "Pohon Keputusan" (Decision Trees). Setiap pohon akan melakukan *voting* penyakit apa yang sedang dialami pengguna berdasarkan input gejala. Hasil voting terbanyak menjadi prediksi akhir (misal: "Psoriasis"). Model ini bisa memprediksi dengan akurat karena ia telah "belajar" menemukan pola matematis dari ratusan data rekam medis pasien sebelumnya.
 
    Langkah 3: Penentuan Profil Kulit (Clustering)
    Pada waktu yang sama, data input pengguna diproses oleh model K-Means Clustering untuk mengidentifikasi tipe atau profil kulit asli pengguna. Kulit akan dikelompokkan ke salah satu dari 5 tipe: Sensitif, Normal, Berminyak, Kering, atau Kombinasi.
 
-   Langkah 4: Mesin Rekomendasi (Rule-Based Engine)
-   Setelah mendapatkan 'Kondisi Medis Kulit' dan 'Tipe Kulit', mesin rekomendasi sistem akan mencocokkan hasil tersebut dengan Database Produk Skincare (PRODUCT_DB) yang sudah divalidasi. Sistem kemudian menampilkan:
-   - Rutinitas Perawatan Lengkap (Cleanser, Toner, Moisturizer, Sunscreen, Serum).
-   - Bahan-Bahan yang Harus Dihindari (Avoidance List) agar kondisi kulit tidak memburuk (misal: anjuran menghindari alkohol atau fragrance untuk kulit eksim kronis).
-   - Tips Perawatan Kulit Harian (Daily Tips) yang bersifat non-medis untuk memperbaiki gaya hidup.
+   Langkah 4: Mesin Rekomendasi (Rule-Based Engine) - [Bagaimana Tahu Skincare yang Cocok & Larangannya?]
+   Setelah mendapatkan prediksi penyakit ('Kondisi Medis Kulit') dan 'Tipe Kulit', sistem menggunakan pendekatan Berbasis Aturan (*Rule-Based Engine*). Di dalam program (file `recommend.py`), terdapat sebuah database kamus (*PRODUCT_DB*) yang sudah dipetakan secara statis berdasarkan riset literatur dermatologi.
+   
+   Sistem bekerja dengan mencocokkan aturan tersebut secara otomatis:
+   - Menentukan Larangan (Avoidance List): Jika terprediksi "Psoriasis", sistem akan mengecek database larangan dan mengeluarkan daftar seperti "Hindari alkohol denat, parfum sintetis, dan SLS" karena dapat memicu iritasi (flare-up) pada Psoriasis.
+   - Pemilihan Produk Skincare: Sistem akan menarik produk spesifik untuk kategori cleanser, toner, moisturizer, dll., yang sudah khusus disiapkan untuk penyakit tersebut. Produk-produk ini telah divalidasi memiliki *Key Ingredients* (bahan utama) yang aman dan menyembuhkan (seperti Ceramide atau Salicylic Acid yang aman).
+   - Tips Perawatan Kulit Harian: Ditambahkan secara otomatis untuk melengkapi gaya hidup (non-medis).
 
 Sistem ini didesain tidak hanya untuk menyarankan kosmetik, namun lebih memprioritaskan rekomendasi produk yang aman dan sesuai secara dermatologis untuk profil medis pengguna, terutama dikhususkan bagi demografi usia muda (young adults).
 
