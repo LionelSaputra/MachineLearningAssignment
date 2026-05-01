@@ -40,6 +40,7 @@ python src/train_model.py
 
 ### 3. Jalankan aplikasi Streamlit
 ```bash
+python -m streamlit run app\streamlit_app.py
 streamlit run app/streamlit_app.py
 ```
 
