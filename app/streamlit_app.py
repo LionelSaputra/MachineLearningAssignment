@@ -239,23 +239,33 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='section-title'>Cakupan Diagnosis Medis</div>", unsafe_allow_html=True)
-    conditions = {
-        "Psoriasis": "Peradangan kronis autoimun",
-        "Seboreic Dermatitis": "Dermatitis area seboroik (berminyak)",
-        "Lichen Planus": "Penyakit inflamasi mukokutan",
-        "Pityriasis Rosea": "Erupsi papuloskuamosa akut",
-        "Chronic Dermatitis": "Eksim dan inflamasi jangka panjang",
-        "Pityriasis Rubra Pilaris": "Gangguan keratinisasi folikel",
-    }
-    html_badges = "".join([f"<span class='badge badge-blue'>{k}</span>" for k in conditions.keys()])
-    st.markdown(f"<div>{html_badges}</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Cakupan Diagnosis Medis Terdaftar</div>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#64748B; margin-bottom:1rem;'>Sistem AI kami dilatih untuk membedakan 6 kondisi dermatologis spesifik dengan menganalisis pola dari 34 fitur klinis dan histopatologis.</p>", unsafe_allow_html=True)
+    
+    with st.expander("📚 Ensiklopedia Kondisi Kulit (Klik untuk detail)"):
+        st.markdown("""
+        * **Psoriasis**: Penyakit autoimun kronis yang mempercepat siklus pertumbuhan sel kulit, menyebabkan penumpukan sel mati bersisik tebal, berwarna perak, dan bercak merah yang gatal atau perih.
+        * **Seboreic Dermatitis**: Kondisi kulit umum yang terutama memengaruhi kulit kepala dan area berminyak lainnya (seperti wajah atau dada), menyebabkan kulit bersisik, merah, dan ketombe membandel. Diduga berkaitan dengan jamur Malassezia.
+        * **Lichen Planus**: Kondisi peradangan yang dapat memengaruhi kulit dan selaput lendir (seperti mulut). Ditandai dengan benjolan keunguan yang gatal, datar, dan sering berbentuk poligonal (banyak sudut).
+        * **Pityriasis Rosea**: Ruam kulit yang biasanya dimulai dengan satu bercak besar berbentuk oval (herald patch) yang kemudian diikuti oleh bercak-bercak lebih kecil di dada, perut, atau punggung. Bersifat sementara dan sering sembuh sendiri.
+        * **Chronic Dermatitis**: Istilah umum untuk peradangan kulit kronis (seperti eksim) yang ditandai dengan kulit kering, sangat gatal, merah, dan menebal karena sering digaruk akibat iritasi berkepanjangan.
+        * **Pityriasis Rubra Pilaris**: Gangguan langka yang menyebabkan bercak merah bersisik menetap (hiperkeratosis), penebalan kulit pada telapak tangan dan kaki, serta benjolan kecil di sekitar folikel rambut.
+        """)
+
+    with st.expander("🧬 Kamus Gejala Klinis (Glossary)"):
+        st.markdown("""
+        * **Erythema (Eritema)**: Kemerahan pada kulit akibat peningkatan aliran darah pada kapiler yang meradang.
+        * **Scaling (Deskuamasi)**: Pengelupasan lapisan terluar kulit, sering disebut sebagai kulit bersisik.
+        * **Koebner Phenomenon**: Munculnya lesi/ruam kulit baru pada area yang sebelumnya mengalami trauma fisik (seperti goresan atau bekas luka).
+        * **Polygonal Papules**: Benjolan kecil padat di permukaan kulit yang batasnya memiliki banyak sudut (tidak bulat sempurna).
+        * **Follicular Papules**: Benjolan kecil yang terbentuk tepat di lokasi folikel rambut (pori-pori rambut).
+        """)
 
     st.markdown("""
     <br>
     <div class='warning-card'>
       <b>Pemberitahuan Medis:</b><br>
-      Aplikasi ini dikembangkan untuk eksperimen AI dan edukasi. Hasil diagnosis tidak dapat diandalkan sebagai pengganti pemeriksaan dokter kulit berlisensi (Sp.KK/Sp.DVE).
+      Aplikasi ini dikembangkan untuk eksperimen AI dan edukasi. Hasil diagnosis <b>tidak dapat diandalkan sebagai pengganti pemeriksaan dokter kulit berlisensi (Sp.KK/Sp.DVE)</b>. Diagnosis final dan peresepan obat keras harus dilakukan oleh dokter.
     </div>
     """, unsafe_allow_html=True)
 
@@ -334,25 +344,38 @@ with tab2:
             skin_prof = rec["skin_profile"]
 
             # DISPLAY RESULTS (CLINICAL REPORT STYLE)
+            st.markdown("<p style='color:#64748B; font-size:0.9rem; margin-bottom:1.5rem;'>Di bawah ini adalah kalkulasi diagnostik yang dihasilkan oleh algoritma <i>Random Forest Classifier</i> berdasarkan data gejala yang Anda masukkan.</p>", unsafe_allow_html=True)
+
             colA, colB = st.columns([1.5, 1])
             with colA:
                 st.markdown(f"""
                 <div class="clinical-card" style="border-top: 4px solid #2563EB;">
-                    <div style="font-size:0.85rem; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Diagnosis Utama</div>
+                    <div style="font-size:0.85rem; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Diagnosis Utama (Primary Diagnosis)</div>
                     <div style="font-size:2rem; color:#0F172A; font-weight:800; margin-top:0.2rem;">{cond_name}</div>
-                    <div style="margin-top:0.5rem;">
+                    <div style="margin-top:0.5rem; margin-bottom:1rem;">
                         <span class="badge badge-blue">Confidence: {conf_score:.1f}%</span>
                         <span class="badge badge-gray">Usia Pasien: {age} thn</span>
                     </div>
-                </div>
+                    <div style="font-size:0.9rem; color:#475569;"><b>Probabilitas Diferensial (Top 3):</b></div>
                 """, unsafe_allow_html=True)
+                
+                # Show top 3 predictions
+                top_indices = np.argsort(proba)[::-1][:3]
+                class_labels = [CLASS_NAMES[i] for i in sorted(CLASS_NAMES.keys())]
+                for idx in top_indices:
+                    prob_val = proba[idx] * 100
+                    if prob_val > 0.1:
+                        st.markdown(f"<div style='font-size:0.85rem; margin-top:0.2rem;'>• {class_labels[idx]}: <b>{prob_val:.1f}%</b></div>", unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
                 
                 if rec["avoid"]:
                     avoid_html = "".join([f"<li style='margin-bottom:0.3rem;'>{a}</li>" for a in rec["avoid"]])
                     st.markdown(f"""
                     <div class="warning-card">
-                        <strong style="display:block; margin-bottom:0.5rem; font-size:1.1rem;">⚠️ Kontraindikasi & Iritan (HINDARI)</strong>
-                        <ul style="margin:0; padding-left:1.2rem;">{avoid_html}</ul>
+                        <strong style="display:block; margin-bottom:0.5rem; font-size:1.1rem;">⚠️ Kontraindikasi & Bahan Iritan (Sangat Dihindari)</strong>
+                        <div style="font-size:0.85rem; margin-bottom:0.5rem; color:#991B1B;">Bahan-bahan di bawah ini berpotensi merusak <i>skin barrier</i> atau memicu respon inflamasi (<i>flare-up</i>) pada kondisi {cond_name}:</div>
+                        <ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">{avoid_html}</ul>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -361,8 +384,9 @@ with tab2:
                 <div class="clinical-card" style="border-top: 4px solid #10B981; height: 100%;">
                     <div style="font-size:0.85rem; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Profil Biometrik Kulit</div>
                     <div style="font-size:1.6rem; color:#0F172A; font-weight:700; margin-top:0.2rem;">{skin_prof['icon']} {skin_prof['name']}</div>
-                    <p style="color:#475569; font-size:0.95rem; line-height:1.6; margin-top:0.8rem;">
-                        {skin_prof['desc']}
+                    <p style="color:#475569; font-size:0.9rem; line-height:1.6; margin-top:0.8rem;">
+                        Berdasarkan pemrosesan <i>K-Means Clustering</i>, kondisi Anda masuk ke dalam klaster <b>{skin_prof['name']}</b>.<br><br>
+                        <b>Karakteristik Umum:</b><br>{skin_prof['desc']}
                     </p>
                     <div style="margin-top:1rem;">
                         <span class="badge badge-green">{rec['concern']}</span>
@@ -370,7 +394,8 @@ with tab2:
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown("<div class='section-title'>Protokol Perawatan (Resep Skincare)</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>Protokol Perawatan (Rekomendasi Skincare)</div>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.9rem; color:#64748B;'>Berdasarkan diagnosis <b>{}</b> dan klaster kulit <b>{}</b>, <i>Rule-Based Expert System</i> kami memformulasikan rutinitas *skincare* yang aman dan terfokus pada perbaikan kondisi.</p>".format(cond_name, skin_prof['name']), unsafe_allow_html=True)
             
             cat_map = {
                 "cleanser": ("Pembersih Wajah", "🧼"),
@@ -430,14 +455,17 @@ with tab3:
         colA, colB = st.columns(2)
         with colA:
             st.markdown("<b>Perbandingan Antar Model</b>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Grafik batang ini mengkomparasi metrik Evaluasi (Akurasi, Precision, Recall, F1) untuk keempat algoritma yang diuji. Random Forest biasanya mendominasi karena kemampuannya menangani interaksi fitur yang kompleks (ensemble method).</p>", unsafe_allow_html=True)
             st.plotly_chart(metrics_comparison_chart(results), use_container_width=True)
         with colB:
             st.markdown("<b>Matriks Kebingungan (Confusion Matrix)</b>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.85rem; color:#64748B;'><i>Confusion Matrix</i> memetakan Prediksi AI vs Kenyataan (Aktual). Jika warna biru gelap terfokus di garis diagonal (kiri atas ke kanan bawah), itu menandakan tebakan model mayoritas benar tanpa ada kelas penyakit yang tertukar.</p>", unsafe_allow_html=True)
             sel_model = st.selectbox("Pilih Model:", list(results.keys()), label_visibility="collapsed")
             st.plotly_chart(confusion_matrix_plotly(results[sel_model]["conf_matrix"], class_labels, sel_model), use_container_width=True)
 
         if "Random Forest" in results:
             st.markdown("<b>Signifikansi Gejala (Feature Importance)</b>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Bagan ini menunjukkan bobot prioritas model AI. Semakin panjang batangnya, semakin penting gejala tersebut dalam mempengaruhi keputusan akhir diagnosis model (misalnya *Scaling* atau *Erythema* seringkali memegang porsi bobot yang besar).</p>", unsafe_allow_html=True)
             rf = results["Random Forest"]["model"]
             st.plotly_chart(feature_importance_plotly(models["features"], rf.feature_importances_.tolist()), use_container_width=True)
     else:
