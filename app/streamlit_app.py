@@ -2,8 +2,14 @@
 streamlit_app.py  —  Skincare Recommender (Clinical / Elegant Light Theme)
 """
 import os, sys, warnings
+from pathlib import Path
 warnings.filterwarnings("ignore")
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Streamlit Cloud sets CWD to the repo root, so we prefer that.
+# Locally (running from app/ subfolder), we resolve up one level from __file__.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import numpy as np
 import pandas as pd
@@ -167,7 +173,7 @@ div[data-testid="stForm"] {
 # ══════════════════════════════════════════════════════════════
 # MODEL LOADING
 # ══════════════════════════════════════════════════════════════
-MODELS_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
+MODELS_DIR = str(REPO_ROOT / "models")
 
 @st.cache_resource(show_spinner="Memuat model medis...")
 def load_models():
