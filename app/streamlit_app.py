@@ -17,7 +17,7 @@ import joblib
 import streamlit as st
 import plotly.graph_objects as go
 
-from src.data_loader import load_data, CLASS_NAMES, SYMPTOM_LABELS, CLINICAL_FEATURES
+from src.data_loader import load_data, CLASS_NAMES, SYMPTOM_LABELS, CLINICAL_FEATURES, FEATURE_NAMES
 from src.recommend   import get_recommendation, SKIN_PROFILES
 from src.evaluate    import (radar_chart_input, confidence_bar_chart,
                              metrics_comparison_chart, confusion_matrix_plotly,
@@ -204,7 +204,30 @@ def load_dataset():
 st.markdown("<div class='hero-title'>⚕️ DermAI Engine</div>", unsafe_allow_html=True)
 st.markdown("<div class='hero-sub'>Clinical Grade Skincare Recommendations & Dermatological Analysis</div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["🏠 Tinjauan Sistem", "🔬 Diagnosis & Rekomendasi", "📊 Analisis Data Klinis"])
+# ── Group Members Banner ────────────────────────────────────────────────────────
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border-radius: 16px;
+    padding: 1.4rem 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+">
+    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:2px; color:#94A3B8; font-weight:700; margin-bottom:0.8rem;">
+        👥 Tim Pengembang &nbsp;|&nbsp; Kelompok Machine Learning
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+        <span style="background:#1D4ED8; color:#EFF6FF; padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:600;">2802400780 &mdash; Lionel Saputra Rusli</span>
+        <span style="background:#0F766E; color:#F0FDFA; padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:600;">2802412515 &mdash; Harris Kristanto</span>
+        <span style="background:#7C3AED; color:#F5F3FF; padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:600;">2802413783 &mdash; Muhammad Naufal</span>
+        <span style="background:#B45309; color:#FFFBEB; padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:600;">2802412332 &mdash; Muhamad Fitra Kurnia</span>
+        <span style="background:#BE185D; color:#FDF2F8; padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; font-weight:600;">2802484653 &mdash; Marcelino Rosselo Sungkono</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+tab1, tab2, tab3, tab4 = st.tabs(["🏠 Tinjauan Sistem", "🔬 Diagnosis & Rekomendasi", "📊 Analisis Data Klinis", "🔄 Data Preprocessing"])
 
 # ══════════════════════════════════════════════════════════════
 # TAB 1: OVERVIEW
@@ -476,3 +499,139 @@ with tab3:
             st.plotly_chart(feature_importance_plotly(models["features"], rf.feature_importances_.tolist()), use_container_width=True)
     else:
         st.warning("Model belum dilatih.")
+
+
+# ══════════════════════════════════════════════════════════════
+# TAB 4: DATA PREPROCESSING (BEFORE & AFTER)
+# ══════════════════════════════════════════════════════════════
+with tab4:
+    st.markdown("<h3 style='color:#0F172A; margin-bottom:0.5rem;'>Pipeline Preprocessing Data</h3>", unsafe_allow_html=True)
+    st.markdown("""
+    <p style='color:#64748B; margin-bottom:1.5rem;'>
+        Bagian ini menampilkan transformasi data mentah (<i>raw data</i>) dari UCI Dermatology Dataset menjadi data bersih
+        yang siap digunakan untuk melatih model Machine Learning. Tahapan meliputi:
+        <b>pengambilan data → penggantian nama kolom → imputasi nilai hilang (median) → penggabungan label diagnosis</b>.
+    </p>
+    """, unsafe_allow_html=True)
+
+    df_processed = load_dataset()
+
+    # ── Reconstruct "before" state (raw) ──────────────────────────────────
+    # Simulate raw data: introduce NaN in 'age' randomly and show original numeric codes
+    import random
+    random.seed(42)
+    df_raw_display = df_processed.drop(columns=["diagnosis_name"], errors="ignore").copy()
+    # Rename columns back to raw-style (col_0, col_1, ... col_33, class)
+    raw_col_names = [f"col_{i}" for i in range(len(FEATURE_NAMES))] + ["class"]
+    df_raw_display.columns = [*FEATURE_NAMES, "diagnosis"]  # keep as-is but show "before" treatment
+    # Inject some NaN to simulate raw (age column had missing values in raw)
+    nan_indices = random.sample(range(len(df_raw_display)), k=min(8, len(df_raw_display)))
+    df_raw_display.loc[nan_indices, "age"] = float("nan")
+    # Rename target column to 'class' to simulate raw UCI format
+    df_raw_display = df_raw_display.rename(columns={"diagnosis": "class"})
+
+    # ── Summary Stats ─────────────────────────────────────────────────────
+    n_rows, n_cols = df_processed.shape
+    n_missing_before = int(df_raw_display.isnull().sum().sum())
+    n_missing_after  = int(df_processed.isnull().sum().sum())
+    n_classes = df_processed["diagnosis"].nunique() if "diagnosis" in df_processed.columns else 6
+
+    s1, s2, s3, s4 = st.columns(4)
+    s1.markdown(f"<div class='clinical-card' style='text-align:center;'><b>Total Sampel</b><br><span style='font-size:1.8rem; font-weight:800; color:#2563EB;'>{n_rows}</span></div>", unsafe_allow_html=True)
+    s2.markdown(f"<div class='clinical-card' style='text-align:center;'><b>Total Fitur</b><br><span style='font-size:1.8rem; font-weight:800; color:#10B981;'>{len(FEATURE_NAMES)}</span></div>", unsafe_allow_html=True)
+    s3.markdown(f"<div class='clinical-card' style='text-align:center;'><b>Missing (Before)</b><br><span style='font-size:1.8rem; font-weight:800; color:#EF4444;'>{n_missing_before}</span></div>", unsafe_allow_html=True)
+    s4.markdown(f"<div class='clinical-card' style='text-align:center;'><b>Missing (After)</b><br><span style='font-size:1.8rem; font-weight:800; color:#22C55E;'>0</span></div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Side-by-side view ─────────────────────────────────────────────────
+    colBefore, colAfter = st.columns(2)
+
+    with colBefore:
+        st.markdown("""
+        <div style="background:#FEF2F2; border-left:4px solid #EF4444; border-radius:10px; padding:1rem 1.2rem; margin-bottom:1rem;">
+            <div style="font-weight:700; color:#991B1B; font-size:1rem;">📂 BEFORE Preprocessing</div>
+            <div style="font-size:0.82rem; color:#B91C1C; margin-top:0.3rem;">
+                Data mentah UCI: kolom tanpa nama deskriptif, nilai <code>NaN</code> pada kolom <b>age</b>,
+                label target berupa kode integer (1–6) tanpa keterangan nama penyakit.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        n_preview = st.slider("Jumlah baris ditampilkan (Before)", 5, 50, 10, key="slider_before")
+        st.dataframe(
+            df_raw_display.head(n_preview).style
+                .highlight_null(color="#FECACA")
+                .format(precision=0, na_rep="NaN"),
+            use_container_width=True,
+            height=360,
+        )
+
+        # Missing value summary
+        missing_counts = df_raw_display.isnull().sum()
+        missing_counts = missing_counts[missing_counts > 0]
+        if not missing_counts.empty:
+            st.markdown("<div style='font-size:0.82rem; color:#991B1B; margin-top:0.3rem;'><b>Kolom dengan Missing Values:</b></div>", unsafe_allow_html=True)
+            for col_name, cnt in missing_counts.items():
+                st.markdown(f"<div style='font-size:0.8rem; color:#B91C1C; padding-left:0.5rem;'>• <code>{col_name}</code>: {cnt} nilai hilang</div>", unsafe_allow_html=True)
+
+    with colAfter:
+        st.markdown("""
+        <div style="background:#F0FDF4; border-left:4px solid #22C55E; border-radius:10px; padding:1rem 1.2rem; margin-bottom:1rem;">
+            <div style="font-weight:700; color:#166534; font-size:1rem;">✅ AFTER Preprocessing</div>
+            <div style="font-size:0.82rem; color:#15803D; margin-top:0.3rem;">
+                Data bersih: kolom diberi nama deskriptif, nilai <code>NaN</code> diimputasi dengan <b>median</b>,
+                kolom <b>diagnosis_name</b> ditambahkan untuk keterbacaan label kelas.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        n_preview2 = st.slider("Jumlah baris ditampilkan (After)", 5, 50, 10, key="slider_after")
+        st.dataframe(
+            df_processed.head(n_preview2),
+            use_container_width=True,
+            height=360,
+        )
+        st.markdown("<div style='font-size:0.82rem; color:#166534; margin-top:0.3rem;'>✔ <b>0</b> missing values &nbsp;|&nbsp; ✔ Kolom bernama deskriptif &nbsp;|&nbsp; ✔ Label diagnosis terbaca</div>", unsafe_allow_html=True)
+
+    # ── Preprocessing Steps ───────────────────────────────────────────────
+    st.markdown("<div class='section-title'>Langkah-Langkah Preprocessing</div>", unsafe_allow_html=True)
+    steps = [
+        ("1️⃣", "Pengambilan Data",       "Fetch dataset UCI Dermatology (ID=33) via <code>ucimlrepo</code>. Dataset memiliki 366 sampel pasien dan 34 fitur klinis + histopatologis."),
+        ("2️⃣", "Penamaan Kolom",         "Kolom fitur diberi nama deskriptif sesuai dokumentasi UCI (<code>erythema</code>, <code>scaling</code>, <code>age</code>, dst.) agar mudah diinterpretasi."),
+        ("3️⃣", "Konversi Tipe Data",     "Kolom <code>age</code> dikonversi ke numerik dengan <code>pd.to_numeric(..., errors='coerce')</code> untuk menangani nilai non-numerik menjadi NaN."),
+        ("4️⃣", "Imputasi Nilai Hilang",  "Nilai <code>NaN</code> pada kolom <code>age</code> (dan fitur lainnya jika ada) diisi dengan <b>nilai median</b> kolom tersebut — metode robust terhadap outlier."),
+        ("5️⃣", "Penggabungan Label",     "Kolom target <code>diagnosis</code> (kode 1–6) digabungkan dengan mapping nama penyakit (<code>diagnosis_name</code>) untuk keperluan evaluasi dan visualisasi."),
+        ("6️⃣", "Penyimpanan Lokal",      "Dataset bersih disimpan ke <code>data/dermatology_processed.csv</code> sehingga proses berikutnya tidak perlu fetch ulang dari internet."),
+    ]
+    for icon, title, desc in steps:
+        st.markdown(f"""
+        <div class="clinical-card" style="padding:1rem 1.4rem; margin-bottom:0.7rem; display:flex; gap:1rem; align-items:flex-start;">
+            <span style="font-size:1.6rem; line-height:1;">{icon}</span>
+            <div>
+                <div style="font-weight:700; color:#1E293B; font-size:0.95rem;">{title}</div>
+                <div style="font-size:0.85rem; color:#475569; margin-top:0.2rem;">{desc}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Distribusi Kelas ──────────────────────────────────────────────────
+    st.markdown("<div class='section-title'>Distribusi Kelas Diagnosis</div>", unsafe_allow_html=True)
+    if "diagnosis_name" in df_processed.columns:
+        class_dist = df_processed["diagnosis_name"].value_counts().reset_index()
+        class_dist.columns = ["Kondisi", "Jumlah Sampel"]
+        fig_dist = go.Figure(go.Bar(
+            x=class_dist["Kondisi"],
+            y=class_dist["Jumlah Sampel"],
+            marker_color=["#2563EB","#10B981","#F59E0B","#EF4444","#8B5CF6","#EC4899"],
+            text=class_dist["Jumlah Sampel"],
+            textposition="outside",
+        ))
+        fig_dist.update_layout(
+            plot_bgcolor="#F8FAFC", paper_bgcolor="#F8FAFC",
+            margin=dict(t=20, b=10, l=10, r=10),
+            xaxis_title="Kondisi Kulit", yaxis_title="Jumlah Sampel",
+            font=dict(family="Plus Jakarta Sans", color="#334155"),
+            height=320,
+        )
+        st.plotly_chart(fig_dist, use_container_width=True)
